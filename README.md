@@ -1,78 +1,117 @@
-# student-performance-prediction
-# Evaluating and Predicting Academic Performance
+# Student Performance Prediction
 
-![Project Logo](images/project_logo.png)
+A machine learning project that explores which factors relate to students' exam results and predicts a student's writing score from their background and their math and reading scores.
 
-## Abstract
+![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB) ![scikit-learn](https://img.shields.io/badge/scikit--learn-Pipeline-F7931E) ![LightGBM](https://img.shields.io/badge/Model-LightGBM-2E7D32) ![RMSE](https://img.shields.io/badge/RMSE-3.88%20points-555555)
 
-The evaluation and prediction of academic performance are essential tasks for educational institutions. This project utilizes machine learning models to analyze factors such as past marks, hobbies, gender, study time, parent’s background, absenteeism, and attendance. By leveraging models like Linear Regression and Bayesian Classification, this project aims to predict future academic outcomes. This helps educators and students understand areas of improvement and enhance overall performance.
+## Table of Contents
 
-## Introduction
+- [Overview](#overview)
+- [Dataset](#dataset)
+- [Key Findings](#key-findings)
+- [Model](#model)
+- [Results](#results)
+- [Installation and Usage](#installation-and-usage)
+- [Project Structure](#project-structure)
+- [Limitations and Future Work](#limitations-and-future-work)
+- [Acknowledgements](#acknowledgements)
 
-Machine learning (ML) enables software applications to improve predictions without explicit programming. In this project, ML models analyze student data to provide insights into performance drivers and predictors.
+## Overview
 
-## Types of Machine Learning
+Schools want to spot students who may need extra support early. This project analyses 1,000 student records to see how gender, ethnic group, parental education, lunch type and test preparation relate to scores in math, reading and writing. It then builds a model that predicts a student's writing score.
 
-### Supervised Learning
+The workflow covers exploratory data analysis, preprocessing with a scikit-learn `ColumnTransformer`, a modelling `Pipeline`, hyperparameter tuning with `GridSearchCV`, saving the model with `joblib`, and predicting the score of a new, unseen student.
 
-Supervised learning trains models with labeled data to predict outcomes. Models like Linear Regression and Bayesian Classification are used in this project to predict academic performance based on input variables.
+## Dataset
 
-### Technologies Used
+[Students Performance in Exams](https://www.kaggle.com/datasets/spscientist/students-performance-in-exams) (Kaggle): 1,000 students, 8 columns, no missing values.
 
-#### Programming Language: Python
+| Column | Description |
+| --- | --- |
+| gender | female / male |
+| race/ethnicity | group A to E |
+| parental level of education | from "some high school" to "master's degree" |
+| lunch | standard or free/reduced |
+| test preparation course | completed or none |
+| math score, reading score, writing score | exam scores from 0 to 100 |
 
-Python is chosen for its simplicity, readability, and extensive libraries supporting machine learning and data analysis.
+## Key Findings
 
-#### Libraries Used:
+**1. Test preparation helps.** Students who completed the preparation course scored higher in every subject, by about 10 points in writing (74.4 vs 64.5).
 
-- **NumPy**: Efficient numerical operations and array manipulations.
-- **Pandas**: Data manipulation and analysis tools.
-- **Scikit-learn**: Machine learning library providing tools for data mining and data analysis.
+<p align="center">
+  <img src="images/scores-by-test-prep.png" alt="Scores by test preparation course" width="900">
+</p>
+
+**2. Lunch type is linked to results.** Students with a standard lunch scored higher than those with free or reduced lunch, by about 11 points in math (70.0 vs 58.9). Lunch type often reflects family income.
+
+<p align="center">
+  <img src="images/scores-by-lunch.png" alt="Scores by lunch type" width="900">
+</p>
+
+**3. The three scores move together.** Reading and writing are very strongly correlated (0.95); math is strongly correlated with both (about 0.8).
+
+<p align="center">
+  <img src="images/pairplot.png" alt="Pair plot of the three scores" width="450">
+</p>
+
+**4. Parental education matters.** Students whose parents have a higher level of education tend to score higher.
+
+<p align="center">
+  <img src="images/writing-by-parent-education.png" alt="Writing score by parental education" width="650">
+</p>
+
+## Model
+
+| Step | Details |
+| --- | --- |
+| Target | Writing score |
+| Features | Gender, ethnic group, parental education, lunch, test preparation, math score, reading score |
+| Preprocessing | One-hot encoding of the 5 categorical columns (`ColumnTransformer`); numeric scores passed through |
+| Model | LightGBM regressor (`LGBMRegressor`) inside a scikit-learn `Pipeline` |
+| Tuning | `GridSearchCV` with 5-fold cross-validation over the number of trees (100 to 190) and boosting type (dart, gbdt, goss) |
+| Metric | Root mean squared error (RMSE) |
+
+## Results
+
+- **Best model:** LightGBM with `goss` boosting and 150 trees
+- **Cross-validated RMSE: 3.88 points** on a 0 to 100 scale, compared with a standard deviation of 15.2 points in writing scores
+
+**Example prediction for a new student:** female, group A, parents with high school education, standard lunch, completed test preparation, math 50, reading 87. **Predicted writing score: 80.3.**
+
+## Installation and Usage
+
+```bash
+git clone https://github.com/Navya1223/student-performance-prediction.git
+cd student-performance-prediction
+pip install -r requirements.txt
+jupyter notebook "Student performance ML project.ipynb"
+```
+
+Run the notebook from top to bottom. It trains the model, saves it as `model.joblib` and makes a prediction for a new student.
 
 ## Project Structure
 
+```
+student-performance-prediction/
+├── Student performance ML project.ipynb   # Analysis, model training and prediction
+├── StudentsPerformance.csv                # Dataset
+├── requirements.txt                       # Python dependencies
+└── images/                                # Charts used in this README
+```
 
-## Usage
+## Limitations and Future Work
 
-1. **Setup Environment**:
-   - Install Python dependencies:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   
-2. **Data Preparation**:
-   - Place datasets in the `data/` directory.
-   - Use `notebooks/` for exploratory data analysis (EDA).
+- Reading score is a very strong predictor of writing score (correlation 0.95), so most of the model's accuracy comes from it. A useful next step is predicting scores from background factors only, which is harder but more useful for early support.
+- 1,000 students is a small dataset; results may not generalise to other schools.
+- Compare LightGBM with simpler baselines such as linear regression, and use a separate hold-out test set.
+- Show which features matter most, for example with feature importance or SHAP values.
 
-3. **Model Training**:
-   - Run scripts in `src/` to preprocess data (`data_processing.py`), train models (`model_training.py`), and evaluate performance (`evaluation.py`).
+## Acknowledgements
 
-4. **Prediction**:
-   - Use `prediction.py` script to make predictions based on trained models.
+- Dataset: [Students Performance in Exams](https://www.kaggle.com/datasets/spscientist/students-performance-in-exams) on Kaggle, originally generated by [Royce Kimmons](http://roycekimmons.com/tools/generated_data/exams).
+- Project idea inspired by [Student's Performance Analytics](https://github.com/roshank1605A04/Student-s-Performance-Analytics) by Roshan Sharma.
 
-## Project Screenshots
+## Technologies
 
-## Usage
-
-1. **Setup Environment**:
-   - Install Python dependencies:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   
-2. **Data Preparation**:
-   - Place datasets in the `data/` directory.
-   - Use `notebooks/` for exploratory data analysis (EDA).
-
-3. **Model Training**:
-   - Run scripts in `src/` to preprocess data (`data_processing.py`), train models (`model_training.py`), and evaluate performance (`evaluation.py`).
-
-4. **Prediction**:
-   - Use `prediction.py` script to make predictions based on trained models.
-
-## Project Screenshots
-<img width="535" alt="Screenshot 2024-07-07 at 18 20 14" src="https://github.com/Navya1223/student-performance-prediction/assets/150002941/2cd44c95-f492-468d-bc37-f7e221a16109">
-<img width="428" alt="Screenshot 2024-07-07 at 18 19 34" src="https://github.com/Navya1223/student-performance-prediction/assets/150002941/b6f93d8a-d454-4089-8e87-d8c1f08c7b70">
-<img width="428" alt="Screenshot 2024-07-07 at 18 19 03" src="https://github.com/Navya1223/student-performance-prediction/assets/150002941/9ca31a10-23f1-4eaa-96cf-1d2dbcd9c814">
-<img width="428" alt="Screenshot 2024-07-07 at 18 18 31" src="https://github.com/Navya1223/student-performance-prediction/assets/150002941/68ad18cd-6e7d-4c19-b37a-110660dab18b">
-
+Python, pandas, NumPy, Matplotlib, Seaborn, scikit-learn, LightGBM, joblib, Jupyter
